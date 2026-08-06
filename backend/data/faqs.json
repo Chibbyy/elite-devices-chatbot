@@ -1,0 +1,22 @@
+[
+  {
+    "question": "What are your business hours?",
+    "keywords": ["hours", "open", "opening", "time"],
+    "answer": "We are open Monday to Saturday from 9:00 AM to 6:00 PM."
+  },
+  {
+    "question": "Where are you located?",
+    "keywords": ["location", "located", "address", "where"],
+    "answer": "Elite Devices is located in Lagos, Nigeria."
+  },
+  {
+    "question": "Do you sell iPhones?",
+    "keywords": ["iphone", "iphones", "apple"],
+    "answer": "Yes, we sell genuine iPhones and other smartphones."
+  },
+  {
+    "question": "Do you offer delivery?",
+    "keywords": ["delivery", "deliver", "shipping", "ship"],
+    "answer": "Yes, we offer nationwide delivery across Nigeria."
+  }
+]

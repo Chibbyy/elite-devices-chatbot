@@ -1,0 +1,22 @@
+[
+  {
+    "purpose": "programming",
+    "product": "MacBook Air M3",
+    "reason": "Excellent performance, long battery life, and lightweight design for developers."
+  },
+  {
+    "purpose": "gaming",
+    "product": "Samsung Galaxy S24 Ultra",
+    "reason": "Powerful processor, high refresh-rate display, and excellent graphics performance."
+  },
+  {
+    "purpose": "photography",
+    "product": "iPhone 15 Pro",
+    "reason": "Professional-grade camera system with outstanding photo and video quality."
+  },
+  {
+    "purpose": "budget laptop",
+    "product": "HP Pavilion 15",
+    "reason": "A solid laptop for everyday tasks at a more affordable price."
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "products": [
+      "iPhone 15 Pro",
+      "Samsung Galaxy S24 Ultra"
+    ],
+    "comparison": {
+      "Display": "iPhone 15 Pro: 6.1-inch OLED | Samsung Galaxy S24 Ultra: 6.8-inch AMOLED",
+      "Camera": "iPhone 15 Pro: 48MP | Samsung Galaxy S24 Ultra: 200MP",
+      "Battery": "iPhone 15 Pro: Up to 23 hours video playback | Samsung Galaxy S24 Ultra: 5000mAh",
+      "Price": "iPhone 15 Pro: ₦1,650,000 | Samsung Galaxy S24 Ultra: ₦1,450,000"
+    }
+  },
+  {
+    "products": [
+      "MacBook Air M3",
+      "HP Pavilion 15"
+    ],
+    "comparison": {
+      "Processor": "MacBook Air M3: Apple M3 | HP Pavilion 15: Intel Core i7",
+      "RAM": "MacBook Air M3: 8GB | HP Pavilion 15: 16GB",
+      "Storage": "MacBook Air M3: 256GB SSD | HP Pavilion 15: 512GB SSD",
+      "Price": "MacBook Air M3: ₦2,100,000 | HP Pavilion 15: ₦980,000"
+    }
+  }
+]

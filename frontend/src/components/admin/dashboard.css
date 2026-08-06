@@ -1,0 +1,30 @@
+.dashboard-content {
+  flex: 1;
+  padding: 30px;
+  background: #f4f4f4;
+}
+
+.stat-cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+}
+
+.stat-card h3 {
+  margin: 0;
+  color: #555;
+}
+
+.stat-card h2 {
+  margin-top: 10px;
+  color: #111827;
+}
