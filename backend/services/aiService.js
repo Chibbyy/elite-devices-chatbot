@@ -2,7 +2,7 @@ const openai = require("../config/openai");
 
 const getAIResponse = async (message) => {
   const response = await openai.responses.create({
-    model: "gpt-5.5",
+    model: "openrouter/free",
     input: message,
   });
 
