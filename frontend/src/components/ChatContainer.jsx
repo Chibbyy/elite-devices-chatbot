@@ -1,17 +1,15 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import ChatHeader from "./ChatHeader";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
+import api from "../services/api";
 
 function ChatContainer() {
   const [messages, setMessages] = useState([]);
 
   const loadHistory = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/chat/history"
-      );
+      const response = await api.get("/chat/history");
 
       setMessages(response.data);
     } catch (error) {
@@ -24,9 +22,7 @@ function ChatContainer() {
   }, []);
 
   return (
-    <div className="chat-container">
-      <ChatHeader />
-
+    <div>
       <ChatMessages messages={messages} />
 
       <ChatInput loadHistory={loadHistory} />
