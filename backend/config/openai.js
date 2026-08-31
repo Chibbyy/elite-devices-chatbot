@@ -1,8 +1,16 @@
-const OpenAI = require("openai");
+const openai = require("../config/openai");
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-});
+const getAIResponse = async (message) => {
+  const response = await openai.chat.completions.create({
+    model: "openrouter/free",
+    messages: [
+      { role: "user", content: message },
+    ],
+  });
 
-module.exports = openai;
+  return response.choices[0].message.content;
+};
+
+module.exports = {
+  getAIResponse,
+};
