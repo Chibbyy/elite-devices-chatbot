@@ -1,5 +1,6 @@
 import ChatContainer from "../components/ChatContainer";
 
+
 function ChatPage() {
   return (
     <div>
