@@ -1,11 +1,8 @@
 const openai = require("../config/openai");
 
 const getAIResponse = async (message) => {
-  console.log("DEBUG openai object:", Object.keys(openai));
-  console.log("DEBUG openai.chat:", openai.chat);
-
   const response = await openai.chat.completions.create({
-    model: "openrouter/free",
+    model: "meta-llama/llama-3.3-70b-instruct:free",
     messages: [
       { role: "user", content: message },
     ],
