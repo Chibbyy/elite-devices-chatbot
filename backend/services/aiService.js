@@ -2,7 +2,7 @@ const openai = require("../config/openai");
 
 const getAIResponse = async (message) => {
   const response = await openai.chat.completions.create({
-    model: "openai/gpt-oss-20b:free",
+    model: "google/gemma-4-31b-it:free",
     messages: [
       { role: "user", content: message },
     ],
