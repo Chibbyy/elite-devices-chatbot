@@ -168,3 +168,10 @@ body {
 .bubble th {
   background-color: #e0e0e0;
 }
+
+.timestamp {
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+  text-align: right;
+}

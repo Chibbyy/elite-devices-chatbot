@@ -24,15 +24,22 @@ function ChatMessages({ messages, loading }) {
             {message.role === "user" ? "🧑" : "🤖"}
           </div>
           <div
-            className={`bubble ${
-              message.role === "user" ? "user-bubble" : "ai-bubble"
-            }`}
-          >
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {message.content}
-            </ReactMarkdown>
-          </div>
-        </div>
+  className={`bubble ${
+    message.role === "user" ? "user-bubble" : "ai-bubble"
+  }`}
+>
+  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+    {message.content}
+  </ReactMarkdown>
+  {message.timestamp && (
+    <div className="timestamp">
+      {new Date(message.timestamp).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
+    </div>
+  )}
+</div>        </div>
       ))}
 
       {loading && (
