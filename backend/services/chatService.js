@@ -17,6 +17,7 @@ const sendReply = (reply) => {
   chatHistory.push({
     role: "assistant",
     content: reply,
+    timestamp: new Date().toISOString(),
   });
 
   return reply;
@@ -28,6 +29,7 @@ const getChatReply = async (message) => {
   chatHistory.push({
   role: "user",
   content: message,
+  timestamp: new Date().toISOString(),
 });
 
   if (
