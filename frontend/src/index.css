@@ -151,3 +151,20 @@ body {
     transform: translateY(-6px);
   }
 }
+
+.bubble table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+}
+
+.bubble th,
+.bubble td {
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.bubble th {
+  background-color: #e0e0e0;
+}

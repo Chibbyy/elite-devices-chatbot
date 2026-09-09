@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 function ChatMessages({ messages, loading }) {
   const messagesEndRef = useRef(null);
@@ -27,7 +28,9 @@ function ChatMessages({ messages, loading }) {
               message.role === "user" ? "user-bubble" : "ai-bubble"
             }`}
           >
-            <ReactMarkdown>{message.content}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {message.content}
+            </ReactMarkdown>
           </div>
         </div>
       ))}
