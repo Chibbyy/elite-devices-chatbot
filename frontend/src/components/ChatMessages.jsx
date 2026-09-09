@@ -1,14 +1,14 @@
 import { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 
-function ChatMessages({ messages }) {
+function ChatMessages({ messages, loading }) {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [messages]);
+  }, [messages, loading]);
 
   return (
     <div className="chat-messages">
@@ -31,6 +31,18 @@ function ChatMessages({ messages }) {
           </div>
         </div>
       ))}
+
+      {loading && (
+        <div className="message-row ai-row">
+          <div className="avatar">🤖</div>
+          <div className="bubble ai-bubble typing-bubble">
+            <span className="dot"></span>
+            <span className="dot"></span>
+            <span className="dot"></span>
+          </div>
+        </div>
+      )}
+
       <div ref={messagesEndRef}></div>
     </div>
   );

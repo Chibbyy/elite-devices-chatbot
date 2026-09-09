@@ -6,6 +6,7 @@ import api from "../services/api";
 
 function ChatContainer() {
   const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const loadHistory = async () => {
     try {
@@ -23,9 +24,9 @@ function ChatContainer() {
 
   return (
     <div>
-      <ChatMessages messages={messages} />
+      <ChatMessages messages={messages} loading={loading} />
 
-      <ChatInput loadHistory={loadHistory} />
+      <ChatInput loadHistory={loadHistory} loading={loading} setLoading={setLoading} />
     </div>
   );
 }
