@@ -319,18 +319,27 @@ if (faq) {
   return sendReply(faq.answer);
 }
 
-  try {
-  const reply = await getAIResponse(message);
+ try {
+  const systemPrompt = {
+    role: "system",
+    content:
+      "You are a friendly sales assistant for Elite Devices, a phone and gadget store in Nigeria. Keep answers helpful and concise.",
+  };
 
-return sendReply(reply);
+  const recentHistory = chatHistory
+    .slice(-10)
+    .map((entry) => ({ role: entry.role, content: entry.content }));
+
+  const reply = await getAIResponse([systemPrompt, ...recentHistory]);
+
+  return sendReply(reply);
 } catch (error) {
   console.error("OpenAI Error:", error);
 
   return sendReply(
-  "I'm sorry, I'm having trouble connecting to the AI service right now. Please try again later."
-);
-}
-};
+    "I'm sorry, I'm having trouble connecting to the AI service right now. Please try again later."
+  );
+} }
 
 module.exports = {
   getChatReply,
