@@ -91,11 +91,6 @@ const getChatReply = async (message) => {
     return sendReply(`Sorry, I couldn't find an order with ID ${orderId}.`);
   }
 
-  const orderKeywords = ["buy", "order", "purchase"];
-  const wantsToOrder = orderKeywords.some((keyword) =>
-    userMessage.includes(keyword)
-  );
-
   if (pendingOrder) {
   const quantityMatch = userMessage.match(/\b\d+\b/);
 
