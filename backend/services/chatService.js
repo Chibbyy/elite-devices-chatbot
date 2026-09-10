@@ -22,6 +22,8 @@ const sendReply = (reply) => {
   return reply;
 };
 
+let pendingOrder = null;
+
 const getChatReply = async (message) => {
   const userMessage = message.toLowerCase();
 
@@ -94,58 +96,98 @@ const getChatReply = async (message) => {
     userMessage.includes(keyword)
   );
 
-  if (wantsToOrder) {
-    const allProducts = await Product.find({});
-    const product = allProducts.find((item) =>
-      userMessage.includes(item.name.toLowerCase())
-    );
+  if (pendingOrder) {
+  const quantityMatch = userMessage.match(/\b\d+\b/);
 
-    if (product) {
-      if (!product.stock) {
+  if (quantityMatch) {
+    const quantity = Number(quantityMatch[0]);
+    const product = pendingOrder;
+    pendingOrder = null;
+
+    if (quantity > product.stock) {
+      return sendReply(
+        `Sorry, we only have ${product.stock} ${product.name}(s) in stock.`
+      );
+    }
+
+    const newOrder = new Order({
+      id: `ORD-${Date.now()}`,
+      product: product.name,
+      quantity,
+      date: new Date().toISOString(),
+    });
+
+    await newOrder.save();
+
+    product.stock -= quantity;
+    await product.save();
+
+    const reply = `Great! You've selected ${quantity} ${product.name}${
+      quantity > 1 ? "s" : ""
+    }. Your order has been saved successfully!\n\nOrder ID: ${newOrder.id}`;
+
+    return sendReply(reply);
+  }
+}
+
+const orderKeywords = ["buy", "order", "purchase"];
+const wantsToOrder = orderKeywords.some((keyword) =>
+  userMessage.includes(keyword)
+);
+
+if (wantsToOrder) {
+  const allProducts = await Product.find({});
+  const product = allProducts.find((item) =>
+    userMessage.includes(item.name.toLowerCase())
+  );
+
+  if (product) {
+    if (!product.stock) {
+      return sendReply(
+        `Sorry, the ${product.name} is currently out of stock and cannot be ordered.`
+      );
+    }
+
+    const quantityMatch = userMessage.match(/\b\d+\b/);
+
+    if (quantityMatch) {
+      const quantity = Number(quantityMatch[0]);
+
+      if (quantity > product.stock) {
         return sendReply(
-          `Sorry, the ${product.name} is currently out of stock and cannot be ordered.`
+          `Sorry, we only have ${product.stock} ${product.name}(s) in stock.`
         );
       }
 
-      const quantityMatch = userMessage.match(/\b\d+\b/);
+      const newOrder = new Order({
+        id: `ORD-${Date.now()}`,
+        product: product.name,
+        quantity,
+        date: new Date().toISOString(),
+      });
 
-      if (quantityMatch) {
-        const quantity = Number(quantityMatch[0]);
+      await newOrder.save();
 
-        if (quantity > product.stock) {
-          return sendReply(
-            `Sorry, we only have ${product.stock} ${product.name}(s) in stock.`
-          );
-        }
+      product.stock -= quantity;
+      await product.save();
 
-        const newOrder = new Order({
-          id: `ORD-${Date.now()}`,
-          product: product.name,
-          quantity,
-          date: new Date().toISOString(),
-        });
+      const reply = `Great! You've selected ${quantity} ${product.name}${
+        quantity > 1 ? "s" : ""
+      }. Your order has been saved successfully!\n\nOrder ID: ${newOrder.id}`;
 
-        await newOrder.save();
-
-        product.stock -= quantity;
-        await product.save();
-
-        const reply = `Great! You've selected ${quantity} ${product.name}${
-          quantity > 1 ? "s" : ""
-        }. Your order has been saved successfully!\n\nOrder ID: ${newOrder.id}`;
-
-        return sendReply(reply);
-      }
-
-      const reply = `Great choice! You'd like to order the ${product.name}. How many would you like to purchase?`;
       return sendReply(reply);
     }
 
-    return sendReply(
-      "I'd be happy to help you place an order! Which product would you like to buy?"
-    );
+    pendingOrder = product;
+
+    const reply = `Great choice! You'd like to order the ${product.name}. How many would you like to purchase?`;
+    return sendReply(reply);
   }
 
+  return sendReply(
+    "I'd be happy to help you place an order! Which product would you like to buy?"
+  );
+}
   const budgetMatch = message.match(/under\s*₦?\s*([\d,]+)/i);
 
   if (budgetMatch) {
