@@ -1,14 +1,13 @@
 const { getAIResponse } = require("./aiService");
-
 const chatHistory = require("../storage/chatHistory");
 
-const fs = require("fs");
+const Product = require("../models/Product");
+const Order = require("../models/Order");
 
 const faqs = require("../data/faqs.json");
-const products = require("../data/products.json");
 const comparisons = require("../data/comparisons.json");
 const recommendations = require("../data/recommendations.json");
-const orders = require("../data/orders.json");
+
 const formatPrice = (price) => {
   return `₦${price.toLocaleString("en-NG")}`;
 };
@@ -22,324 +21,284 @@ const sendReply = (reply) => {
 
   return reply;
 };
+
 const getChatReply = async (message) => {
-  
   const userMessage = message.toLowerCase();
 
   chatHistory.push({
-  role: "user",
-  content: message,
-  timestamp: new Date().toISOString(),
-});
+    role: "user",
+    content: message,
+    timestamp: new Date().toISOString(),
+  });
 
   if (
-  userMessage.includes("show all orders") ||
-  userMessage.includes("order history")
-) {
-  if (orders.length === 0) {
-    return sendReply("There are no orders yet.");
+    userMessage.includes("show all orders") ||
+    userMessage.includes("order history")
+  ) {
+    const orders = await Order.find({});
+
+    if (orders.length === 0) {
+      return sendReply("There are no orders yet.");
+    }
+
+    const reply =
+      "Order History\n\n" +
+      orders
+        .map(
+          (order) =>
+            `• ${order.id}\nProduct: ${order.product}\nQuantity: ${order.quantity}\nDate: ${order.date}`
+        )
+        .join("\n\n");
+
+    return sendReply(reply);
   }
 
-  const reply =
-    "Order History\n\n" +
-    orders
-      .map(
-        (order) =>
-          `• ${order.id}
-Product: ${order.product}
-Quantity: ${order.quantity}
-Date: ${order.date}`
-      )
-      .join("\n\n");
+  const cancelOrderMatch = message.match(/cancel\s+order\s+(ORD-\d+)/i);
+  if (cancelOrderMatch) {
+    const orderId = cancelOrderMatch[1].toUpperCase();
 
-  return sendReply(reply);
-}
-  
+    const order = await Order.findOne({ id: orderId });
 
-const cancelOrderMatch = message.match(/cancel\s+order\s+(ORD-\d+)/i);
-if (cancelOrderMatch) {
-  const orderId = cancelOrderMatch[1].toUpperCase();
+    if (!order) {
+      return sendReply(`Sorry, I couldn't find an order with ID ${orderId}.`);
+    }
 
-const orderIndex = orders.findIndex(
-  (order) => order.id && order.id.toUpperCase() === orderId
-);
+    const product = await Product.findOne({ name: order.product });
 
-  if (orderIndex === -1) {
-  return sendReply(
-    `Sorry, I couldn't find an order with ID ${orderId}.`
+    if (product) {
+      product.stock += order.quantity;
+      await product.save();
+    }
+
+    await Order.deleteOne({ id: orderId });
+
+    return sendReply(`Your order (${orderId}) has been cancelled successfully.`);
+  }
+
+  const orderIdMatch = message.match(/check\s+order\s+(ORD-\d+)/i);
+  if (orderIdMatch) {
+    const orderId = orderIdMatch[1].toUpperCase();
+
+    const order = await Order.findOne({ id: orderId });
+
+    if (order) {
+      const reply = `Order Found\n\nOrder ID: ${order.id}\nProduct: ${order.product}\nQuantity: ${order.quantity}\nDate: ${order.date}`;
+      return sendReply(reply);
+    }
+
+    return sendReply(`Sorry, I couldn't find an order with ID ${orderId}.`);
+  }
+
+  const orderKeywords = ["buy", "order", "purchase"];
+  const wantsToOrder = orderKeywords.some((keyword) =>
+    userMessage.includes(keyword)
   );
-}
 
-  const order = orders[orderIndex];
+  if (wantsToOrder) {
+    const allProducts = await Product.find({});
+    const product = allProducts.find((item) =>
+      userMessage.includes(item.name.toLowerCase())
+    );
 
-  const product = products.find(
-    (item) => item.name === order.product
-  );
+    if (product) {
+      if (!product.stock) {
+        return sendReply(
+          `Sorry, the ${product.name} is currently out of stock and cannot be ordered.`
+        );
+      }
 
-  if (product) {
-    product.stock += order.quantity;
+      const quantityMatch = userMessage.match(/\b\d+\b/);
 
-    fs.writeFileSync(
-      "./data/products.json",
-      JSON.stringify(products, null, 2)
+      if (quantityMatch) {
+        const quantity = Number(quantityMatch[0]);
+
+        if (quantity > product.stock) {
+          return sendReply(
+            `Sorry, we only have ${product.stock} ${product.name}(s) in stock.`
+          );
+        }
+
+        const newOrder = new Order({
+          id: `ORD-${Date.now()}`,
+          product: product.name,
+          quantity,
+          date: new Date().toISOString(),
+        });
+
+        await newOrder.save();
+
+        product.stock -= quantity;
+        await product.save();
+
+        const reply = `Great! You've selected ${quantity} ${product.name}${
+          quantity > 1 ? "s" : ""
+        }. Your order has been saved successfully!\n\nOrder ID: ${newOrder.id}`;
+
+        return sendReply(reply);
+      }
+
+      const reply = `Great choice! You'd like to order the ${product.name}. How many would you like to purchase?`;
+      return sendReply(reply);
+    }
+
+    return sendReply(
+      "I'd be happy to help you place an order! Which product would you like to buy?"
     );
   }
 
-  orders.splice(orderIndex, 1);
-
-  fs.writeFileSync(
-    "./data/orders.json",
-    JSON.stringify(orders, null, 2)
-  );
-
-  return sendReply(
-  `Your order (${orderId}) has been cancelled successfully.`
-);
-}
-const orderIdMatch = message.match(/check\s+order\s+(ORD-\d+)/i);
-if (orderIdMatch) {
-  const orderId = orderIdMatch[1].toUpperCase();
-
-  const order = orders.find(
-  (item) => item.id && item.id.toUpperCase() === orderId
-);
-
-  if (order) {
-  const reply = `Order Found
-
-Order ID: ${order.id}
-Product: ${order.product}
-Quantity: ${order.quantity}
-Date: ${order.date}`;
-
-  return sendReply(reply);
-}
-
-return sendReply(
-  `Sorry, I couldn't find an order with ID ${orderId}.`
-);
-}
-
-
-  const orderKeywords = ["buy", "order", "purchase"];
-
-  const wantsToOrder = orderKeywords.some((keyword) =>
-  userMessage.includes(keyword)
-);
-
-if (wantsToOrder) {
-  const product = products.find((item) =>
-    userMessage.includes(item.name.toLowerCase())
-  );
-
-if (product) {
-  if (!product.stock) {
-return sendReply(
-  `Sorry, the ${product.name} is currently out of stock and cannot be ordered.`
-);
-}
-
-  const quantityMatch = userMessage.match(/\b\d+\b/);
-
-  if (quantityMatch) {
-   const quantity = Number(quantityMatch[0]);
-   if (quantity > product.stock) {
-  return sendReply(
-  `Sorry, we only have ${product.stock} ${product.name}(s) in stock.`
-);
-}
-
-
-const newOrder = {
-  id: `ORD-${Date.now()}`,
-  product: product.name,
-  quantity,
-  date: new Date().toISOString(),
-};
-
-orders.push(newOrder);
-product.stock -= quantity;
-
-fs.writeFileSync(
-  "./data/orders.json",
-  JSON.stringify(orders, null, 2)
-);
-
-fs.writeFileSync(
-  "./data/products.json",
-  JSON.stringify(products, null, 2)
-);
-
-const reply = `Great! You've selected ${quantity} ${product.name}${
-  quantity > 1 ? "s" : ""
-}. Your order has been saved successfully!
-
-Order ID: ${newOrder.id}`;
-
-return sendReply(reply);
-  }
-
-  const reply = `Great choice! You'd like to order the ${product.name}. How many would you like to purchase?`;
-
-return sendReply(reply);
-}
-
-  return sendReply(
-  "I'd be happy to help you place an order! Which product would you like to buy?"
-);
-}
-
   const budgetMatch = message.match(/under\s*₦?\s*([\d,]+)/i);
 
-if (budgetMatch) {
-  const budget = Number(budgetMatch[1].replace(/,/g, ""));
+  if (budgetMatch) {
+    const budget = Number(budgetMatch[1].replace(/,/g, ""));
+    const allProducts = await Product.find({});
 
-  const affordableProducts = products.filter((item) => {
-  const matchesBudget = item.price <= budget;
+    const affordableProducts = allProducts.filter((item) => {
+      const matchesBudget = item.price <= budget;
 
-  const matchesCategory =
-    !userMessage.includes("laptop") &&
-    !userMessage.includes("smartphone")
-      ? true
-      : userMessage.includes(item.category.toLowerCase()) ||
-        userMessage.includes(item.category.toLowerCase().replace(/s$/, ""));
+      const matchesCategory =
+        !userMessage.includes("laptop") && !userMessage.includes("smartphone")
+          ? true
+          : userMessage.includes(item.category.toLowerCase()) ||
+            userMessage.includes(item.category.toLowerCase().replace(/s$/, ""));
 
-  return matchesBudget && matchesCategory;
-});
+      return matchesBudget && matchesCategory;
+    });
 
-  if (affordableProducts.length > 0) {
-  const reply =
-    `Products under ${formatPrice(budget)}:\n\n` +
-    affordableProducts
-      .map(
-        (item) =>
-          `• ${item.name} - ${formatPrice(item.price)} (${
-            item.stock > 0
-              ? `In Stock (${item.stock})`
-              : "Out of Stock"
-          })`
-      )
-      .join("\n");
+    if (affordableProducts.length > 0) {
+      const reply =
+        `Products under ${formatPrice(budget)}:\n\n` +
+        affordableProducts
+          .map(
+            (item) =>
+              `• ${item.name} - ${formatPrice(item.price)} (${
+                item.stock > 0 ? `In Stock (${item.stock})` : "Out of Stock"
+              })`
+          )
+          .join("\n");
 
-  return sendReply(reply);
-}
-  return sendReply(
-  `Sorry, we don't have any products under ${formatPrice(budget)}.`
-);
-}
+      return sendReply(reply);
+    }
+
+    return sendReply(
+      `Sorry, we don't have any products under ${formatPrice(budget)}.`
+    );
+  }
+
   const recommendation = recommendations.find((item) =>
-  userMessage.includes(item.purpose.toLowerCase())
-);
-
-if (recommendation) {
-  const reply = `I recommend the ${recommendation.product}.\n\nReason: ${recommendation.reason}`;
-
-  return sendReply(reply);
-}
-const comparison = comparisons.find((item) => {
-  const firstProduct = item.products[0].toLowerCase();
-  const secondProduct = item.products[1].toLowerCase();
-
-  return (
-    (userMessage.includes(firstProduct) &&
-      userMessage.includes(secondProduct)) ||
-    (userMessage.includes("compare") &&
-      (userMessage.includes(firstProduct) ||
-        userMessage.includes(secondProduct))) ||
-    (userMessage.includes("vs") &&
-      (userMessage.includes(firstProduct) ||
-        userMessage.includes(secondProduct)))
+    userMessage.includes(item.purpose.toLowerCase())
   );
-});
-if (comparison) {
-  const result = comparison.comparison;
 
-  const comparisonText = Object.entries(result)
-    .map(([feature, value]) => `• ${feature}\n  ${value}`)
-    .join("\n\n");
+  if (recommendation) {
+    const reply = `I recommend the ${recommendation.product}.\n\nReason: ${recommendation.reason}`;
+    return sendReply(reply);
+  }
 
-  const reply = `Comparison Results:\n\n${comparisonText}`;
+  const comparison = comparisons.find((item) => {
+    const firstProduct = item.products[0].toLowerCase();
+    const secondProduct = item.products[1].toLowerCase();
 
-return sendReply(reply);
-}
-  const product = products.find(
-  (item) =>
-    userMessage.includes(item.name.toLowerCase()) ||
-    userMessage.includes(item.brand.toLowerCase())
-);
+    return (
+      (userMessage.includes(firstProduct) && userMessage.includes(secondProduct)) ||
+      (userMessage.includes("compare") &&
+        (userMessage.includes(firstProduct) || userMessage.includes(secondProduct))) ||
+      (userMessage.includes("vs") &&
+        (userMessage.includes(firstProduct) || userMessage.includes(secondProduct)))
+    );
+  });
 
-if (product) {
-  const reply = `${product.name} costs ${formatPrice(product.price)}. ${
-    product.stock > 0
-      ? `It is currently in stock (${product.stock} available).`
-      : "It is currently out of stock."
-  }`;
+  if (comparison) {
+    const result = comparison.comparison;
 
-  return sendReply(reply);
-}
-const categoryProducts = products.filter((item) => {
-  const category = item.category.toLowerCase();
+    const comparisonText = Object.entries(result)
+      .map(([feature, value]) => `• ${feature}\n  ${value}`)
+      .join("\n\n");
 
-  return (
-    userMessage.includes(category) ||
-    userMessage.includes(category.replace(/s$/, ""))
+    const reply = `Comparison Results:\n\n${comparisonText}`;
+    return sendReply(reply);
+  }
+
+  const allProductsForLookup = await Product.find({});
+
+  const product = allProductsForLookup.find(
+    (item) =>
+      userMessage.includes(item.name.toLowerCase()) ||
+      userMessage.includes(item.brand.toLowerCase())
   );
-});
-if (categoryProducts.length > 0) {
-  const reply =
-    "We have these " +
-    categoryProducts[0].category +
-    "s:\n" +
-    categoryProducts
-      .map(
-        (item) =>
-          `• ${item.name} - ${formatPrice(item.price)} (${
-            item.stock > 0
-              ? `In Stock (${item.stock})`
-              : "Out of Stock"
-          })`
-      )
-      .join("\n");
 
-  return sendReply(reply);
-}
+  if (product) {
+    const reply = `${product.name} costs ${formatPrice(product.price)}. ${
+      product.stock > 0
+        ? `It is currently in stock (${product.stock} available).`
+        : "It is currently out of stock."
+    }`;
+
+    return sendReply(reply);
+  }
+
+  const categoryProducts = allProductsForLookup.filter((item) => {
+    const category = item.category.toLowerCase();
+
+    return (
+      userMessage.includes(category) ||
+      userMessage.includes(category.replace(/s$/, ""))
+    );
+  });
+
+  if (categoryProducts.length > 0) {
+    const reply =
+      "We have these " +
+      categoryProducts[0].category +
+      "s:\n" +
+      categoryProducts
+        .map(
+          (item) =>
+            `• ${item.name} - ${formatPrice(item.price)} (${
+              item.stock > 0 ? `In Stock (${item.stock})` : "Out of Stock"
+            })`
+        )
+        .join("\n");
+
+    return sendReply(reply);
+  }
+
   const faq = faqs.find((item) => {
-  const questionMatch =
-    userMessage.includes(item.question.toLowerCase()) ||
-    item.question.toLowerCase().includes(userMessage);
+    const questionMatch =
+      userMessage.includes(item.question.toLowerCase()) ||
+      item.question.toLowerCase().includes(userMessage);
 
-  const keywordMatch = item.keywords.some((keyword) =>
-    userMessage.includes(keyword.toLowerCase())
-  );
+    const keywordMatch = item.keywords.some((keyword) =>
+      userMessage.includes(keyword.toLowerCase())
+    );
 
-  return questionMatch || keywordMatch;
-});
+    return questionMatch || keywordMatch;
+  });
 
-if (faq) {
-  return sendReply(faq.answer);
-}
+  if (faq) {
+    return sendReply(faq.answer);
+  }
 
- try {
-  const systemPrompt = {
-    role: "system",
-    content:
-      "You are a friendly sales assistant for Elite Devices, a phone and gadget store in Nigeria. Keep answers helpful and concise.",
-  };
+  try {
+    const systemPrompt = {
+      role: "system",
+      content:
+        "You are a friendly sales assistant for Elite Devices, a phone and gadget store in Nigeria. Keep answers helpful and concise.",
+    };
 
-  const recentHistory = chatHistory
-    .slice(-10)
-    .map((entry) => ({ role: entry.role, content: entry.content }));
+    const recentHistory = chatHistory
+      .slice(-10)
+      .map((entry) => ({ role: entry.role, content: entry.content }));
 
-  const reply = await getAIResponse([systemPrompt, ...recentHistory]);
+    const reply = await getAIResponse([systemPrompt, ...recentHistory]);
 
-  return sendReply(reply);
-} catch (error) {
-  console.error("OpenAI Error:", error);
+    return sendReply(reply);
+  } catch (error) {
+    console.error("OpenAI Error:", error);
 
-  return sendReply(
-    "I'm sorry, I'm having trouble connecting to the AI service right now. Please try again later."
-  );
-} }
+    return sendReply(
+      "I'm sorry, I'm having trouble connecting to the AI service right now. Please try again later."
+    );
+  }
+};
 
 module.exports = {
   getChatReply,
