@@ -143,7 +143,8 @@ if (wantsToOrder) {
       );
     }
 
-    const quantityMatch = userMessage.match(/\b\d+\b/);
+    const messageWithoutProductName = userMessage.replace(product.name.toLowerCase(), "");
+    const quantityMatch = messageWithoutProductName.match(/\b\d+\b/);
 
     if (quantityMatch) {
       const quantity = Number(quantityMatch[0]);
