@@ -28,3 +28,25 @@
   margin-top: 10px;
   color: #111827;
 }
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-table th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+}
+
+.admin-table tr:hover {
+  background-color: #f9fafb;
+}

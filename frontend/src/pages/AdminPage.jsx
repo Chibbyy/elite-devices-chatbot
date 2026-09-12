@@ -1,7 +1,12 @@
+import { useState } from "react";
 import AdminSidebar from "../components/admin/AdminSidebar";
 import DashboardContent from "../components/admin/DashboardContent";
+import ProductsContent from "../components/admin/ProductsContent";
+import OrdersContent from "../components/admin/OrdersContent";
 
 function AdminPage() {
+  const [activeView, setActiveView] = useState("dashboard");
+
   return (
     <div
       style={{
@@ -10,9 +15,11 @@ function AdminPage() {
         fontFamily: "Arial, sans-serif",
       }}
     >
-      <AdminSidebar />
+      <AdminSidebar activeView={activeView} setActiveView={setActiveView} />
 
-      <DashboardContent />
+      {activeView === "dashboard" && <DashboardContent />}
+      {activeView === "products" && <ProductsContent />}
+      {activeView === "orders" && <OrdersContent />}
     </div>
   );
 }

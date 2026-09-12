@@ -1,4 +1,12 @@
-function AdminSidebar() {
+function AdminSidebar({ activeView, setActiveView }) {
+  const items = [
+    { key: "dashboard", label: "📊 Dashboard" },
+    { key: "products", label: "📦 Products" },
+    { key: "orders", label: "🛒 Orders" },
+    { key: "analytics", label: "📈 Analytics" },
+    { key: "settings", label: "⚙️ Settings" },
+  ];
+
   return (
     <aside
       style={{
@@ -12,11 +20,21 @@ function AdminSidebar() {
 
       <hr />
 
-      <p>📊 Dashboard</p>
-      <p>📦 Products</p>
-      <p>🛒 Orders</p>
-      <p>📈 Analytics</p>
-      <p>⚙️ Settings</p>
+      {items.map((item) => (
+        <p
+          key={item.key}
+          onClick={() => setActiveView(item.key)}
+          style={{
+            cursor: "pointer",
+            padding: "8px",
+            borderRadius: "6px",
+            backgroundColor:
+              activeView === item.key ? "#374151" : "transparent",
+          }}
+        >
+          {item.label}
+        </p>
+      ))}
     </aside>
   );
 }
