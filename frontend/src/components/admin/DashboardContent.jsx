@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../services/api";
 import "./dashboard.css";
 import StatCard from "./StatCard";
 
@@ -12,9 +12,7 @@ function DashboardContent() {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/dashboard"
-        );
+        const response = await api.get("/dashboard");
 
         setStats(response.data);
       } catch (error) {
@@ -32,25 +30,10 @@ function DashboardContent() {
       <p>Welcome to the Elite Devices management system.</p>
 
       <div className="stat-cards">
-        <StatCard
-          title="Products"
-          value={stats.totalProducts}
-        />
-
-        <StatCard
-          title="Orders"
-          value={stats.totalOrders}
-        />
-
-        <StatCard
-          title="Revenue"
-          value="Coming Soon"
-        />
-
-        <StatCard
-          title="Customers"
-          value="Coming Soon"
-        />
+        <StatCard title="Products" value={stats.totalProducts} />
+        <StatCard title="Orders" value={stats.totalOrders} />
+        <StatCard title="Revenue" value="Coming Soon" />
+        <StatCard title="Customers" value="Coming Soon" />
       </div>
     </main>
   );
