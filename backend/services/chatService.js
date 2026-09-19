@@ -1,5 +1,5 @@
 const { getAIResponse } = require("./aiService");
-const chatHistory = require("../storage/chatHistory");
+const { getSession } = require("../storage/chatHistory");
 
 const Product = require("../models/Product");
 const Order = require("../models/Order");
@@ -12,26 +12,25 @@ const formatPrice = (price) => {
   return `₦${price.toLocaleString("en-NG")}`;
 };
 
-const sendReply = (reply) => {
-  chatHistory.push({
-    role: "assistant",
-    content: reply,
-    timestamp: new Date().toISOString(),
-  });
-
-  return reply;
-};
-
-let pendingOrder = null;
-
-const getChatReply = async (message) => {
+const getChatReply = async (message, sessionId) => {
+  const session = getSession(sessionId);
   const userMessage = message.toLowerCase();
 
-  chatHistory.push({
+  session.history.push({
     role: "user",
     content: message,
     timestamp: new Date().toISOString(),
   });
+
+  const sendReply = (reply) => {
+    session.history.push({
+      role: "assistant",
+      content: reply,
+      timestamp: new Date().toISOString(),
+    });
+
+    return reply;
+  };
 
   if (
     userMessage.includes("show all orders") ||
@@ -91,63 +90,13 @@ const getChatReply = async (message) => {
     return sendReply(`Sorry, I couldn't find an order with ID ${orderId}.`);
   }
 
-  if (pendingOrder) {
-  const quantityMatch = userMessage.match(/\b\d+\b/);
-
-  if (quantityMatch) {
-    const quantity = Number(quantityMatch[0]);
-    const product = pendingOrder;
-    pendingOrder = null;
-
-    if (quantity > product.stock) {
-      return sendReply(
-        `Sorry, we only have ${product.stock} ${product.name}(s) in stock.`
-      );
-    }
-
-    const newOrder = new Order({
-      id: `ORD-${Date.now()}`,
-      product: product.name,
-      quantity,
-      date: new Date().toISOString(),
-    });
-
-    await newOrder.save();
-
-    product.stock -= quantity;
-    await product.save();
-
-    const reply = `Great! You've selected ${quantity} ${product.name}${
-      quantity > 1 ? "s" : ""
-    }. Your order has been saved successfully!\n\nOrder ID: ${newOrder.id}`;
-
-    return sendReply(reply);
-  }
-}
-
-const orderKeywords = ["buy", "order", "purchase"];
-const wantsToOrder = orderKeywords.some((keyword) =>
-  userMessage.includes(keyword)
-);
-
-if (wantsToOrder) {
-  const allProducts = await Product.find({});
-  const product = allProducts.find((item) =>
-    userMessage.includes(item.name.toLowerCase())
-  );
-
-  if (product) {
-    if (!product.stock) {
-      return sendReply(
-        `Sorry, the ${product.name} is currently out of stock and cannot be ordered.`
-      );
-    }
-
-    const messageWithoutProductName = userMessage.replace(product.name.toLowerCase(), "");
-    const quantityMatch = messageWithoutProductName.match(/\b\d+\b/);
+  if (session.pendingOrder) {
+    const quantityMatch = userMessage.match(/\b\d+\b/);
 
     if (quantityMatch) {
       const quantity = Number(quantityMatch[0]);
+      const product = session.pendingOrder;
+      session.pendingOrder = null;
 
       if (quantity > product.stock) {
         return sendReply(
@@ -173,17 +122,71 @@ if (wantsToOrder) {
 
       return sendReply(reply);
     }
-
-    pendingOrder = product;
-
-    const reply = `Great choice! You'd like to order the ${product.name}. How many would you like to purchase?`;
-    return sendReply(reply);
   }
 
-  return sendReply(
-    "I'd be happy to help you place an order! Which product would you like to buy?"
+  const orderKeywords = ["buy", "order", "purchase"];
+  const wantsToOrder = orderKeywords.some((keyword) =>
+    userMessage.includes(keyword)
   );
-}
+
+  if (wantsToOrder) {
+    const allProducts = await Product.find({});
+    const product = allProducts.find((item) =>
+      userMessage.includes(item.name.toLowerCase())
+    );
+
+    if (product) {
+      if (!product.stock) {
+        return sendReply(
+          `Sorry, the ${product.name} is currently out of stock and cannot be ordered.`
+        );
+      }
+
+      const messageWithoutProductName = userMessage.replace(
+        product.name.toLowerCase(),
+        ""
+      );
+      const quantityMatch = messageWithoutProductName.match(/\b\d+\b/);
+
+      if (quantityMatch) {
+        const quantity = Number(quantityMatch[0]);
+
+        if (quantity > product.stock) {
+          return sendReply(
+            `Sorry, we only have ${product.stock} ${product.name}(s) in stock.`
+          );
+        }
+
+        const newOrder = new Order({
+          id: `ORD-${Date.now()}`,
+          product: product.name,
+          quantity,
+          date: new Date().toISOString(),
+        });
+
+        await newOrder.save();
+
+        product.stock -= quantity;
+        await product.save();
+
+        const reply = `Great! You've selected ${quantity} ${product.name}${
+          quantity > 1 ? "s" : ""
+        }. Your order has been saved successfully!\n\nOrder ID: ${newOrder.id}`;
+
+        return sendReply(reply);
+      }
+
+      session.pendingOrder = product;
+
+      const reply = `Great choice! You'd like to order the ${product.name}. How many would you like to purchase?`;
+      return sendReply(reply);
+    }
+
+    return sendReply(
+      "I'd be happy to help you place an order! Which product would you like to buy?"
+    );
+  }
+
   const budgetMatch = message.match(/under\s*₦?\s*([\d,]+)/i);
 
   if (budgetMatch) {
@@ -322,7 +325,7 @@ if (wantsToOrder) {
         "You are a friendly sales assistant for Elite Devices, a phone and gadget store in Nigeria. Keep answers helpful and concise.",
     };
 
-    const recentHistory = chatHistory
+    const recentHistory = session.history
       .slice(-10)
       .map((entry) => ({ role: entry.role, content: entry.content }));
 
@@ -338,6 +341,12 @@ if (wantsToOrder) {
   }
 };
 
+const getChatHistory = (sessionId) => {
+  const session = getSession(sessionId);
+  return session.history;
+};
+
 module.exports = {
   getChatReply,
+  getChatHistory,
 };

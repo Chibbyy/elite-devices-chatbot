@@ -1,23 +1,32 @@
-const chatHistory = require("../storage/chatHistory");
-const { getChatReply } = require("../services/chatService");
+const { getChatReply, getChatHistory } = require("../services/chatService");
 
 const chat = async (req, res) => {
-  const { message } = req.body;
+  const { message, sessionId } = req.body;
 
-  const reply = await getChatReply(message);
+  if (!sessionId) {
+    return res.status(400).json({ error: "sessionId is required" });
+  }
 
-  console.log(chatHistory);
+  const reply = await getChatReply(message, sessionId);
 
   res.json({
     reply,
   });
 };
 
-const getChatHistory = (req, res) => {
-  res.json(chatHistory);
+const getHistory = (req, res) => {
+  const { sessionId } = req.query;
+
+  if (!sessionId) {
+    return res.status(400).json({ error: "sessionId is required" });
+  }
+
+  const history = getChatHistory(sessionId);
+
+  res.json(history);
 };
 
 module.exports = {
   chat,
-  getChatHistory,
+  getChatHistory: getHistory,
 };
