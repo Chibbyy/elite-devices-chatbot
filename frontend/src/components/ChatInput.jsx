@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../services/api";
+import getSessionId from "../services/session";
 
 function ChatInput({ loadHistory, loading, setLoading }) {
   const [message, setMessage] = useState("");
@@ -14,6 +15,7 @@ function ChatInput({ loadHistory, loading, setLoading }) {
     try {
       const response = await api.post("/chat", {
         message: message,
+        sessionId: getSessionId(),
       });
       await loadHistory();
 

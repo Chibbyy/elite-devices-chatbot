@@ -3,6 +3,7 @@ import ChatHeader from "./ChatHeader";
 import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import api from "../services/api";
+import getSessionId from "../services/session";
 
 function ChatContainer() {
   const [messages, setMessages] = useState([]);
@@ -10,7 +11,9 @@ function ChatContainer() {
 
   const loadHistory = async () => {
     try {
-      const response = await api.get("/chat/history");
+      const response = await api.get("/chat/history", {
+        params: { sessionId: getSessionId() },
+      });
 
       setMessages(response.data);
     } catch (error) {
