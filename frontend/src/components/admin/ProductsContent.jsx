@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../../services/api";
+import adminApi from "../../services/adminApi";
 import "./dashboard.css";
 
 function ProductsContent() {
@@ -9,7 +9,7 @@ function ProductsContent() {
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const response = await api.get("/products");
+        const response = await adminApi.get("/products");
         setProducts(response.data);
       } catch (error) {
         console.error(error);

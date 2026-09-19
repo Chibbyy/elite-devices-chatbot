@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../../services/api";
+import adminApi from "../../services/adminApi";
 import "./dashboard.css";
 import StatCard from "./StatCard";
 
@@ -12,7 +12,7 @@ function DashboardContent() {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const response = await api.get("/dashboard");
+        const response = await adminApi.get("/dashboard");
 
         setStats(response.data);
       } catch (error) {

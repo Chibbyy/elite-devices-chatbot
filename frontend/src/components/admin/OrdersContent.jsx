@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../../services/api";
+import adminApi from "../../services/adminApi";
 import "./dashboard.css";
 
 function OrdersContent() {
@@ -9,7 +9,7 @@ function OrdersContent() {
   useEffect(() => {
     const loadOrders = async () => {
       try {
-        const response = await api.get("/orders");
+        const response = await adminApi.get("/orders");
         setOrders(response.data);
       } catch (error) {
         console.error(error);
