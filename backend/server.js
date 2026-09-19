@@ -9,6 +9,7 @@ const cors = require("cors");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const chatRoutes = require("./routes/chatRoutes");
+const adminAuth = require("./middleware/adminAuth");
 
 const app = express();
 
@@ -22,9 +23,10 @@ app.use(express.json());
 
 // Routes
 app.use("/chat", chatRoutes);
-app.use("/dashboard", dashboardRoutes);
-app.use("/orders", orderRoutes);
-app.use("/products", productRoutes);
+
+app.use("/dashboard", adminAuth, dashboardRoutes);
+app.use("/products", adminAuth, productRoutes);
+app.use("/orders", adminAuth, orderRoutes);
 
 app.get("/", (req, res) => {
   res.send("Elite Devices Backend is Running!");
