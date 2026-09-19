@@ -1,10 +1,8 @@
 const adminAuth = (req, res, next) => {
   const providedKey = req.headers["x-admin-key"];
+  const expectedKey = (process.env.ADMIN_KEY || "").trim();
 
-  console.log("DEBUG - Provided key:", JSON.stringify(providedKey));
-  console.log("DEBUG - Expected key:", JSON.stringify(process.env.ADMIN_KEY));
-
-  if (!providedKey || providedKey !== process.env.ADMIN_KEY) {
+  if (!providedKey || providedKey.trim() !== expectedKey) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
